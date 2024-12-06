@@ -1,7 +1,164 @@
-﻿
-@{
+﻿@{
     ViewBag.Title = "Lista";
 }
 
-<h2>Lista</h2>
+<h2>Administrar Estudiantes</h2>
+<button id="btnOpenDialog" class="btn btn-primary">Registrar Estudiante</button>
 
+<div id="dialog" title="Registrar Estudiante" style="display: none;">
+    <form id="formEstudiante">
+        <div class="form-group">
+            <label for="Nombre">Nombre:</label>
+            <input type="text" id="Nombre" name="Nombre" class="form-control" maxlength="100" required />
+        </div>
+        <div class="form-group">
+            <label for="IdProvincia">Provincia:</label>
+            <select id="IdProvincia" name="IdProvincia" class="form-control" required>
+                <option value="">Seleccione una provincia</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="IdCanton">Cantón:</label>
+            <select id="IdCanton" name="IdCanton" class="form-control" required>
+                <option value="">Seleccione un cantón</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="IdDistrito">Distrito:</label>
+            <select id="IdDistrito" name="IdDistrito" class="form-control" required>
+                <option value="">Seleccione un distrito</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="PruebaParcial1">Prueba Parcial 1:</label>
+            <input type="number" id="PruebaParcial1" name="PruebaParcial1" class="form-control" min="0" max="100" required />
+        </div>
+        <div class="form-group">
+            <label for="PruebaParcial2">Prueba Parcial 2:</label>
+            <input type="number" id="PruebaParcial2" name="PruebaParcial2" class="form-control" min="0" max="100" required />
+        </div>
+        <div class="form-group">
+            <label for="Asignacion">Asignación:</label>
+            <input type="number" id="Asignacion" name="Asignacion" class="form-control" min="0" max="100" required />
+        </div>
+        <div class="form-group">
+            <label for="Proyecto">Proyecto:</label>
+            <input type="number" id="Proyecto" name="Proyecto" class="form-control" min="0" max="100" required />
+        </div>
+        <div class="form-group">
+            <label for="TrabajoInvestigacion">Trabajo de Investigación:</label>
+            <input type="number" id="TrabajoInvestigacion" name="TrabajoInvestigacion" class="form-control" min="0" max="100" required />
+        </div>
+        <button type="button" id="btnInsertar" class="btn btn-primary">Insertar</button>
+    </form>
+</div>
+
+<table id="estudiantesTable" class="display" style="width:100%">
+    <thead>
+        <tr>
+            <th>Nombre Estudiante</th>
+            <th>Nota</th>
+            <th>Distrito</th>
+            <th>Cantón</th>
+            <th>Provincia</th>
+        </tr>
+    </thead>
+</table>
+
+@section Scripts {
+    <!-- Use CDNs for jQuery and jQuery UI -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.min.css">
+
+    <!-- DataTables Script -->
+    <script src="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Initialize DataTable
+            const table = $('#estudiantesTable').DataTable({
+                ajax: {
+                    url: '@Url.Action("RetornaEstudiantes", "Estudiantes")',
+                    dataSrc: ''
+                },
+                columns: [
+                    { data: 'Estudiante', title: 'Nombre Estudiante' },
+                    { data: 'Nota', title: 'Nota' },
+                    { data: 'Distrito', title: 'Distrito' },
+                    { data: 'Canton', title: 'Cantón' },
+                    { data: 'Provincia', title: 'Provincia' }
+                ]
+            });
+
+            // Initialize dialog
+            $("#dialog").dialog({
+                autoOpen: false,
+                modal: true,
+                width: 500
+            });
+
+            // Open dialog on button click
+            $("#btnOpenDialog").click(function () {
+                $("#dialog").dialog("open");
+            });
+
+            // Populate Province Dropdown
+            $.getJSON('@Url.Action("RetornaProvincias", "Estudiantes")', function (data) {
+                $("#IdProvincia").empty().append('<option value="">Seleccione una provincia</option>');
+                $.each(data, function (i, item) {
+                    $("#IdProvincia").append('<option value="' + item.Id + '">' + item.Nombre + '</option>');
+                });
+            });
+
+            // Load cantons when province changes
+            $("#IdProvincia").change(function () {
+                const provinceId = $(this).val();
+                if (provinceId) {
+                    $.getJSON('@Url.Action("RetornaCantones", "Estudiantes")', { idProvincia: provinceId }, function (data) {
+                        $("#IdCanton").empty().append('<option value="">Seleccione un cantón</option>');
+                        $.each(data, function (i, item) {
+                            $("#IdCanton").append('<option value="' + item.Id + '">' + item.Nombre + '</option>');
+                        });
+                    });
+                } else {
+                    $("#IdCanton").empty().append('<option value="">Seleccione un cantón</option>');
+                }
+            });
+
+            // Load districts when canton changes
+            $("#IdCanton").change(function () {
+                const cantonId = $(this).val();
+                if (cantonId) {
+                    $.getJSON('@Url.Action("RetornaDistritos", "Estudiantes")', { idCanton: cantonId }, function (data) {
+                        $("#IdDistrito").empty().append('<option value="">Seleccione un distrito</option>');
+                        $.each(data, function (i, item) {
+                            $("#IdDistrito").append('<option value="' + item.Id + '">' + item.Nombre + '</option>');
+                        });
+                    });
+                } else {
+                    $("#IdDistrito").empty().append('<option value="">Seleccione un distrito</option>');
+                }
+            });
+
+            // Handle form submission
+            $("#btnInsertar").click(function () {
+                const form = $("#formEstudiante");
+
+                $.ajax({
+                    url: '@Url.Action("InsertaEstudiante", "Estudiantes")',
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (response) {
+                        alert(response.message); // Show success message
+                        $("#dialog").dialog("close"); // Close the dialog
+                        table.ajax.reload(); // Reload DataTable
+                    },
+                    error: function (xhr) {
+                        alert(`Error: ${xhr.responseText}`); // Show error message
+                    }
+                });
+            });
+        });
+    </script>
+}
