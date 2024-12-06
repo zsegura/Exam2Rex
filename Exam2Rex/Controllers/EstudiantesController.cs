@@ -91,20 +91,34 @@ namespace Exam2Rex.Controllers
 
         // Insert a new student record
         [HttpPost]
-        public JsonResult InsertaEstudiante(string nombre, int idDistrito, decimal pruebaParcial1, decimal pruebaParcial2, decimal asignacion, decimal proyecto, decimal trabajoInvestigacion)
+        public JsonResult InsertaEstudiante(
+    string nombre,
+    int idDistrito,
+    decimal pruebaParcial1,
+    decimal pruebaParcial2,
+    decimal asignacion,
+    decimal proyecto,
+    decimal trabajoInvestigacion)
         {
             try
             {
+                // Calculate weighted scores
+                decimal weightedPruebaParcial1 = pruebaParcial1 * 0.15m;
+                decimal weightedPruebaParcial2 = pruebaParcial2 * 0.15m;
+                decimal weightedAsignacion = asignacion * 0.15m;
+                decimal weightedProyecto = proyecto * 0.40m;
+                decimal weightedTrabajoInvestigacion = trabajoInvestigacion * 0.15m;
+
                 using (var db = new PrograVIDB("MyDatabase"))
                 {
                     var result = db.InsertarEstudiante(
                         nombre,
                         idDistrito,
-                        pruebaParcial1,
-                        pruebaParcial2,
-                        asignacion,
-                        proyecto,
-                        trabajoInvestigacion
+                        weightedPruebaParcial1,
+                        weightedPruebaParcial2,
+                        weightedAsignacion,
+                        weightedProyecto,
+                        weightedTrabajoInvestigacion
                     );
                 }
 
@@ -115,5 +129,6 @@ namespace Exam2Rex.Controllers
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
             }
         }
+
     }
 }
